@@ -2,6 +2,8 @@
 	Capes SH Init
 */
 Capes = Capes or {};
+Capes.Hooks = {};
+
 function Capes:LoadFile(filePath)
 	local split = string.Split( filePath, "/" );
 	--Separate our file name from the full path
@@ -26,15 +28,48 @@ end;
 function Capes:LoadDir(dirPath)
 	local files, dirs = file.Find( dirPath .. "/*", "LUA" );
 	for _,file in pairs(files) do
-		local filePath = dirPath .. '/' .. file;
-		self:LoadFile(filePath);
+		self:LoadFile(dirPath .. '/' .. file);
 	end;
-	for _,dir in pairs( dirs ) do
-		PrintTable(files);
-		local dirPath = dirPath .. dir;
-		self:LoadDir(dirPath);
+	for _,dir in pairs(dirs) do
+		self:LoadDir(dirPath .. '/' .. dir);
 	end;
 end;
+
+function Capes:RegisterHooks(library)
+	local hookTable = library.Hooks or {};
+	for hookType, hookFunc in pairs(hookTable) do
+		-- If we don't have a table for these hooks, create one
+		if (!self.Hooks[hookType]) then
+			self.Hooks[hookType] = {};
+		end;
+
+		-- Create our callback function for this particular hook
+		local func = function(...)
+			local returnValue = hookFunc(library, ...);
+			if (returnValue) then
+				return returnValue;
+			end;
+		end;
+
+		table.insert(self.Hooks[hookType], func);
+
+		-- Create our hook
+		hook.Add(hookType, 'Capes_' .. hookType, function(...)
+			local hookFuncs = Capes.Hooks[hookType];
+			if (hookFuncs) then
+				for _,hookFunc in pairs(hookFuncs) do
+					local returnValue = hookFunc(...);
+					if (returnValue) then
+						return returnValue;
+					end;
+				end;
+			end;
+		end);
+
+		print('Added hook: ' .. hookType);
+	end;
+end;
+
 print('Capes SH Loaded!');
 
 if (SERVER) then

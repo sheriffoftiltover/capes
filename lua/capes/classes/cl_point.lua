@@ -39,6 +39,10 @@ function Point.Prototype:addPointConstraint(pointConstraint)
 	table.insert(self.constraints, pointConstraint);
 end;
 
+function Point.Prototype:addVelocity(velocity)
+	self.velocity = (self.velocity + velocity);
+end;
+
 function Point.Prototype:draw()
 	local worldPos = self.offset;
 	local scrPos = worldPos:ToScreen();
@@ -53,13 +57,14 @@ function Point.Prototype:draw()
 	end;
 end;
 
-function Point.Prototype:addVelocity(velocity)
-	self.velocity = (self.velocity + velocity);
-end;
-
 function Point.Prototype:update()
 	if (self.entity ~= nil) then
-		self.offset = self.entity:GetPos() + self.entityOffset;
+		local angles = self.entity:GetAngles();
+		angles.p = 0;
+		local right = angles:Right();
+		local up = angles:Up();
+
+		self.offset = self.entity:GetPos() + right * self.entityOffset.y + up * self.entityOffset.z;
 	else
 		local delta = CurTime() - self.lastUpdate;
 		local newOffset = self.offset + self.velocity * delta;
@@ -67,8 +72,10 @@ function Point.Prototype:update()
 			start = self.offset,
 			endpos = newOffset - Vector(0, 0, 9.8) * delta
 		});
-		if (!trace.HitWorld) then
+		if (!trace.Hit) then
 			newOffset = newOffset - Vector(0, 0, 9.8) * delta;
+		else
+			newOffset.z = trace.HitPos.z;
 		end;
 		self.offset = newOffset;
 	end;

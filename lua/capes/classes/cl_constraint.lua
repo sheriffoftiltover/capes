@@ -19,9 +19,7 @@ function Constraint.Prototype:update()
 		local distance = self.p1.offset:Distance(self.p2.offset);
 		local lengthDiff = self.length / distance;
 		local diffNormal = diffPos:GetNormal();
-		local deltaTime = CurTime() - self.lastUpdate;
 		self.p1.velocity = -diffPos * (distance - self.length);
-		self.lastUpdate = CurTime();
 	end;
 end;
 
@@ -57,7 +55,6 @@ function Constraint.Meta.__call(table, name)
 		p1 = nil,
 		p2 = nil,
 		length = 1,
-		lastUpdate = CurTime(),
 	};
 	setmetatable(c, Constraint.Meta);
 	return c;
